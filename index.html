@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#173b57">
+  <title>JobPilot — Job Search & Resume Studio</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Browser-only libraries loaded from public CDNs. No API secrets are used. -->
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/docx.umd.min.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand-mark">JP</div>
+    <div class="brand-copy"><h1>JobPilot</h1><p>Job discovery & resume studio</p></div>
+    <span class="local-badge">Browser-based</span>
+  </header>
+
+  <main class="wrap">
+    <section class="hero">
+      <p class="eyebrow">YOUR JOB SEARCH WORKSPACE</p>
+      <h2>Find a role. Tailor your resume. Apply.</h2>
+      <p class="muted">Search the wider web, save interesting roles, and create a Word resume based on your own experience.</p>
+    </section>
+
+    <nav class="tabs" aria-label="Main sections">
+      <button class="tab active" data-tab="searchPanel">Find jobs</button>
+      <button class="tab" data-tab="resumePanel">My resume</button>
+      <button class="tab" data-tab="savedPanel">Saved jobs <span id="savedCount" class="count">0</span></button>
+    </nav>
+
+    <section id="searchPanel" class="panel">
+      <div class="section-heading"><div><h2>Search across the web</h2><p>Opens live search results from search engines and job portals.</p></div></div>
+      <form id="searchForm" class="form-grid">
+        <label class="full">Job title or keywords
+          <input id="keyword" value="Application Support" required placeholder="e.g. Application Support, SQL, L2 Support">
+        </label>
+        <label>Location
+          <input id="location" value="India" placeholder="e.g. Chennai, India">
+        </label>
+        <label>Experience
+          <select id="experience">
+            <option>Any experience</option><option>0–2 years</option><option>3–5 years</option><option selected>5–8 years</option><option>8+ years</option>
+          </select>
+        </label>
+        <label>Work mode
+          <select id="workMode"><option>Any</option><option>Remote</option><option>Hybrid</option><option>Office</option></select>
+        </label>
+        <label>Posted within
+          <select id="dateFilter"><option value="">Any time</option><option value="d">Past 24 hours</option><option value="w">Past week</option><option value="m">Past month</option></select>
+        </label>
+        <button class="primary full" type="submit">Search the web</button>
+      </form>
+      <div class="notice"><strong>How this works:</strong> GitHub Pages is static hosting, so it cannot scrape every job portal directly. JobPilot opens real web searches in separate tabs. Portal-specific search links are provided too. Results and availability depend on each site.</div>
+      <div id="searchLinks" class="link-grid">
+        <a class="source-card" href="https://www.google.com/search?q=Application+Support+jobs+India" target="_blank" rel="noopener"><span class="source-icon">G</span><span><strong>Google Search</strong><small>Search jobs across the web</small></span><span class="arrow">↗</span></a>
+        <a class="source-card" href="https://www.bing.com/search?q=Application+Support+jobs+India" target="_blank" rel="noopener"><span class="source-icon">B</span><span><strong>Bing Search</strong><small>Find public job listings</small></span><span class="arrow">↗</span></a>
+      </div>
+      <hr>
+      <div class="section-heading"><div><h3>Add a job you found</h3><p>Paste the original job link and description to tailor your resume.</p></div></div>
+      <form id="jobForm" class="form-grid">
+        <label class="full">Job title <input id="jobTitle" required placeholder="e.g. Application Support Engineer"></label>
+        <label>Company <input id="jobCompany" placeholder="Company name"></label>
+        <label>Application URL <input id="jobUrl" type="url" required placeholder="https://..."></label>
+        <label class="full">Job description <textarea id="jobDescription" rows="5" placeholder="Paste the job description here for matching and resume tailoring"></textarea></label>
+        <button class="primary full" type="submit">Save this job</button>
+      </form>
+    </section>
+
+    <section id="resumePanel" class="panel hidden">
+      <div class="section-heading"><div><h2>My master resume</h2><p>Stored in this browser on this device. It is not uploaded to a server by JobPilot.</p></div></div>
+      <div class="notice warning"><strong>Important:</strong> Browser storage can be erased if you clear site data or use another browser/device. Keep a separate backup of your original resume. Do not use private/incognito mode for your main copy.</div>
+      <label class="file-picker">Choose resume file (PDF, DOCX or TXT)
+        <input id="resumeFile" type="file" accept=".pdf,.docx,.txt">
+      </label>
+      <div id="fileStatus" class="muted small">No file loaded yet.</div>
+      <label class="block-label">Resume text <span class="muted small">Review the extracted text before saving.</span>
+        <textarea id="resumeText" rows="15" placeholder="Upload a PDF/DOCX/TXT resume or paste your resume text here."></textarea>
+      </label>
+      <div class="button-row"><button id="saveResume" class="primary">Save master resume</button><button id="clearResume" class="secondary">Clear saved resume</button></div>
+      <p id="resumeStatus" class="status" role="status"></p>
+    </section>
+
+    <section id="savedPanel" class="panel hidden">
+      <div class="section-heading"><div><h2>Saved jobs</h2><p>Choose a job to review its details or generate a tailored Word resume.</p></div></div>
+      <div id="savedJobs" class="job-list"></div>
+      <div id="emptyJobs" class="empty-state"><div class="empty-icon">☆</div><strong>No saved jobs yet</strong><p>Search the web, then add a job using its original link and description.</p></div>
+    </section>
+
+    <section id="jobDetail" class="panel hidden">
+      <button id="backToJobs" class="text-button">← Back to saved jobs</button>
+      <div id="jobDetailContent"></div>
+    </section>
+
+    <footer><p>JobPilot prototype · No automatic applications are submitted. Always review your resume before applying.</p><p><a href="https://docs.github.com/en/pages" target="_blank" rel="noopener">GitHub Pages help ↗</a></p></footer>
+  </main>
+</body>
+</html>
